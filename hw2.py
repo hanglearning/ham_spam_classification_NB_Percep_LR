@@ -21,9 +21,9 @@ import operator
 trainig_set_dir = '/Users/chenhang91/TEMP/684group2/hw 2 datasets/dataset 1/train/'
 test_set_dir = '/Users/chenhang91/TEMP/684group2/hw 2 datasets/dataset 1/test/'
 stop_word_path = '/Users/chenhang91/TEMP/684group2/hw 2 datasets/stop_words.txt' # found from some github that contains common stop words to skip
-learning_rate = 
-regularization_lambda,
-training_iterations
+learning_rate = 0.1 # Andrew Ng 0.001 * 3 till 1
+regularization_lambda = 1
+training_iterations = 100
 
 def process_documents_and_extract_words(data_set_dir):
 
@@ -87,7 +87,7 @@ except:
 ''' used whole_data_set_doc_by_doc to count for documents under each class;
     used vocabulary_set to iterate each word;
     used data_set_by_class_label to calculate the conditional probability for each word;
-    used algorithm in 13bayes page260
+    Originally used algorithm in 13bayes page260, but the smoothing method is not consistent with the one used in Lec5 page26. We finally adapted the machanism from the slides since that makes more sense to us.
     '''
 def train_navie_bayes():
     print("Learning by Naive Bayes...")
@@ -100,13 +100,13 @@ def train_navie_bayes():
     for class_count in naive_bayes_class_prior:
         naive_bayes_class_prior[class_count] /= entire_docs_count
     for class_label in data_set_by_class_label:
-        total_num_of_words_in_this_class = sum(data_set_by_class_label[class_label].values()) # https://stackoverflow.com/questions/4880960/how-to-sum-all-the-values-in-a-dictionary
-        class_label_counts_with_smoothing = total_num_of_words_in_this_class + num_of_unique_words_in_all_document_space # used as the denominator when calculating the conditional probability of a word
+        conditional_prob_for_each_word[class_label]['total_num_of_words_in_this_class'] = sum(data_set_by_class_label[class_label].values()) # https://stackoverflow.com/questions/4880960/how-to-sum-all-the-values-in-a-dictionary
         for word in vocabulary_set:
-            if word not in data_set_by_class_label[class_label]:
-                conditional_prob_for_each_word[word] = (0 + 1) / class_label_counts_with_smoothing
+            conditional_prob_for_each_word[class_label]['word_count'][word] = 0
+            if word in data_set_by_class_label[class_label]:
+                conditional_prob_for_each_word[class_label]['word_count'][word] = data_set_by_class_label[class_label][word]
             else:
-                conditional_prob_for_each_word[word] = (data_set_by_class_label[class_label][word] + 1) / class_label_counts_with_smoothing
+                continue # conditional_prob_for_each_word[class_label]['word_count'][word] is by default 0
     print("Naive Bayes learning accomplished!\n")
     return naive_bayes_class_prior, conditional_prob_for_each_word
 
@@ -194,16 +194,15 @@ def classify_and_test_for_accuracy(classifier):
                         words_count_for_this_doc = collections.Counter(re.findall(r'\w+', doc_content))
                         print("Testing by {}...".format(classifier))
                         if classifier == "Naive Bayes":
-                            '''TODO Smoothing for unseen words'''
                             class_score_for_this_doc = {}
                             for class_label in class_labels:
                                 class_score_for_this_doc[class_label] = math.log(naive_bayes_class_prior[class_label])
                                 for word in words_count_for_this_doc:
                                     if word not in stop_words:
                                         if word not in conditional_prob_for_each_word:
-                                            # smoothing L5 page23, (0+mp)/(num_words_in_this_class + 1 + num_of_total_words + 1)
-                                            # TODO
-                                        class_score_for_this_doc[class_label] += words_count_for_this_doc[word] * math.log(conditional_prob_for_each_word[word])
+                                            conditional_prob_for_each_word[class_label]['word_count'][word] = 0
+                                        # apply smoothing
+                                        class_score_for_this_doc[class_label] += words_count_for_this_doc[word] * math.log(conditional_prob_for_each_word[class_label]['word_count'][word] / conditional_prob_for_each_word[class_label]['total_num_of_words_in_this_class'])
                                 prediction = max(class_score_for_this_doc.items(), key=operator.itemgetter(1))[0] # https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
                         elif classifier == "Perceptron":
                             perceptron_weighted_sum_of_this_doc = perceptron_weight_vector['bias_term'] * 1
