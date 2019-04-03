@@ -92,25 +92,21 @@ except:
 def train_navie_bayes():
     print("Learning by Naive Bayes...")
     naive_bayes_class_prior = {} # count of the documents under each class
-    conditional_prob_for_each_word = {}
-    num_of_unique_words_in_all_document_space = len(vocabulary_set)
+    num_of_words_occurances = {}
+    num_of_words_occurances['num_of_unique_words_in_all_document_space'] = len(vocabulary_set)
+    # calculate naive_bayes_class_prior
     for class_label in whole_data_set_doc_by_doc:
         naive_bayes_class_prior[class_label] = len(whole_data_set_doc_by_doc[class_label])
         entire_docs_count += naive_bayes_class_prior[class_label]
     for class_count in naive_bayes_class_prior:
         naive_bayes_class_prior[class_count] /= entire_docs_count
+    # sum over all the number of word occurances in one particular class 
     for class_label in data_set_by_class_label:
-        conditional_prob_for_each_word[class_label]['total_num_of_words_in_this_class'] = sum(data_set_by_class_label[class_label].values()) # https://stackoverflow.com/questions/4880960/how-to-sum-all-the-values-in-a-dictionary
-        for word in vocabulary_set:
-            conditional_prob_for_each_word[class_label]['word_count'][word] = 0
-            if word in data_set_by_class_label[class_label]:
-                conditional_prob_for_each_word[class_label]['word_count'][word] = data_set_by_class_label[class_label][word]
-            else:
-                continue # conditional_prob_for_each_word[class_label]['word_count'][word] is by default 0
+        num_of_words_occurances[class_label] = sum(data_set_by_class_label[class_label].values()) # https://stackoverflow.com/questions/4880960/how-to-sum-all-the-values-in-a-dictionary
     print("Naive Bayes learning accomplished!\n")
-    return naive_bayes_class_prior, conditional_prob_for_each_word
+    return naive_bayes_class_prior, num_of_words_occurances
 
-naive_bayes_class_prior, conditional_prob_for_each_word = train_navie_bayes()
+naive_bayes_class_prior, num_of_words_occurances = train_navie_bayes()
 
 ''' used whole_data_set_doc_by_doc to iterate over words in each document(since perceptron is an
     incremental algorithm);
@@ -141,7 +137,7 @@ def train_perceptron(learning_rate, training_iterations, training_data_set):
     print("Learning by Perceptron Rule accomplished!\n")
     return weight_vector
 
-perceptron_weight_vector = train_perceptron(learning_rate, training_iterations, training_data_set)
+perceptron_weight_vector = train_perceptron(learning_rate, training_iterations, divided_training_set)
 
 '''used algorithm in Lec6 page26 and page30'''
 def train_logistic_regression(learning_rate, regularization_lambda, training_iterations):
@@ -199,10 +195,10 @@ def classify_and_test_for_accuracy(classifier):
                                 class_score_for_this_doc[class_label] = math.log(naive_bayes_class_prior[class_label])
                                 for word in words_count_for_this_doc:
                                     if word not in stop_words:
-                                        if word not in conditional_prob_for_each_word:
-                                            conditional_prob_for_each_word[class_label]['word_count'][word] = 0
+                                        if word not in data_set_by_class_label[class_label]:
+                                            data_set_by_class_label[class_label][word] = 0
                                         # apply smoothing
-                                        class_score_for_this_doc[class_label] += words_count_for_this_doc[word] * math.log(conditional_prob_for_each_word[class_label]['word_count'][word] / conditional_prob_for_each_word[class_label]['total_num_of_words_in_this_class'])
+                                        class_score_for_this_doc[class_label] += words_count_for_this_doc[word] * math.log((data_set_by_class_label[class_label][word] + 1)/ num_of_words_occurances[class_label] + num_of_words_occurances['num_of_unique_words_in_all_document_space'])
                                 prediction = max(class_score_for_this_doc.items(), key=operator.itemgetter(1))[0] # https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
                         elif classifier == "Perceptron":
                             perceptron_weighted_sum_of_this_doc = perceptron_weight_vector['bias_term'] * 1
@@ -219,7 +215,7 @@ def classify_and_test_for_accuracy(classifier):
                             for word in words_count_for_this_doc:
                                 if word in vocabulary_set:
                                     logistic_regression_weighted_sum_of_this_doc += logistic_regression_weight_vector[word] * words_count_for_this_doc[word]
-                                    exp_weighted_sum_of_this_doc = math.exp(weighted_sum_of_this_doc)
+                                    exp_weighted_sum_of_this_doc = math.exp(logistic_regression_weighted_sum_of_this_doc)
                                     # sigmoid function
                                     prediction = class_labels[1] if 1/(1 + exp_weighted_sum_of_this_doc) > exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc) else class_labels[0] # corresponding to yi = 1 if class_label == class_labels[0] else 0 in train_logistic_regression
                                 else:
