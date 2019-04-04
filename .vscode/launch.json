@@ -53,6 +53,9 @@
                 "FLASK_APP": "app.py"
             },
             "args": [
+                "1",
+                "1",
+                "stop_words.txt",
                 "run",
                 "--no-debugger",
                 "--no-reload"
