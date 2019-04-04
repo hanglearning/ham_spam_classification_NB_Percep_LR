@@ -290,7 +290,6 @@ for training_iterations in iterations_and_rate_with_accuracy:
 			maximum_classified = iterations_and_rate_with_accuracy[training_iterations][learning_rate]
 			best_iter_and_rate['iter'] = training_iterations
 			best_iter_and_rate['rate'] = learning_rate
-print(best_iter_and_rate)
 
 print("After testing on the validation set, the best choice of training_iterations is {} and learning_rate is {}.".format(best_iter_and_rate['iter'], best_iter_and_rate['rate']))
 print("Learning the params on the whole training set using this pair of hyperparams...")
