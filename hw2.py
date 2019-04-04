@@ -157,7 +157,7 @@ def train_perceptron(learning_rate, training_iterations, training_data_set):
     return weight_vector
 
 '''used algorithm in Lec6 page26 and page30'''
-def train_logistic_regression(learning_rate, regularization_lambda, training_iterations, training_data_set, learn_on_divided_training_set=None):
+def train_logistic_regression(learning_rate, regularization_lambda, training_iterations, training_data_set, learn_on_divided_training_set=None, weight_weaken_scaler=10000):
     print("Learning by Logistic Regression...")
     vocabulary_set_used = vocabulary_set_divided_training_set if learn_on_divided_training_set == True else vocabulary_set
     weight_vector = {'bias_term': 0.1}
@@ -191,7 +191,7 @@ def train_logistic_regression(learning_rate, regularization_lambda, training_ite
                 weight_vector_to_update['bias_term'] += learning_rate * (yi - exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc)) #no regularization for the bias term
         weight_vector = deepcopy(weight_vector_to_update)
         for word in weight_vector:
-            weight_vector[word] /= 100 # to avoid exp() explode
+            weight_vector[word] /= weight_weaken_scaler # to avoid exp() explode
     return weight_vector
 
 def classify_and_test_for_accuracy(classifier, test_on_validation=None, perceptron_weight_vector=None, logistic_regression_weight_vector=None):
@@ -248,13 +248,15 @@ def classify_and_test_for_accuracy(classifier, test_on_validation=None, perceptr
 
 # Choosing the best lambda for logistic regression
 print("\nChoosing the best regularization constant lambda for Logistic Regression...")
-learning_rate = 0.1
 training_iterations = 4
-print("We will use {} training iterations and the learning rate {}, and test for lambda in [0, 10]".format(training_iterations, learning_rate))
+learning_rate = 0.1
+weight_weaken_scaler = 100
+regularization_lambda_values = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+print("We will use {} training iterations, the learning rate {}, the weight_weaken_scaler {}, and test for lambda in {}".format(training_iterations, learning_rate, weight_weaken_scaler, regularization_lambda_values))
 regularization_lambda_with_accuracy = {}
-for regularization_lambda in range(11):
+for regularization_lambda in regularization_lambda_values:
     print("Using lambda {} on the 70% training set...".format(regularization_lambda))
-    logistic_regression_weight_vector = train_logistic_regression(learning_rate, regularization_lambda, training_iterations, divided_training_set, True)
+    logistic_regression_weight_vector = train_logistic_regression(learning_rate, regularization_lambda, training_iterations, divided_training_set, True, weight_weaken_scaler)
     print("Testing lambda {} on the 30% validation set...".format(regularization_lambda))
     regularization_lambda_with_accuracy[regularization_lambda] = classify_and_test_for_accuracy(classifier="Logistic Regression", test_on_validation=True, logistic_regression_weight_vector=logistic_regression_weight_vector)
     print()
