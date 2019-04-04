@@ -282,21 +282,18 @@ for training_iterations in training_iterations_values:
         iterations_and_rate_with_accuracy[training_iterations][learning_rate] = classify_and_test_for_accuracy(classifier="Perceptron", test_on_validation=True, perceptron_weight_vector=perceptron_weight_vector)
         print()
 
-for key1 in iterations_and_rate_with_accuracy:
-    for key2 in iterations_and_rate_with_accuracy[key1]:
-        print(key1, key2, iterations_and_rate_with_accuracy[key1][key2])
+maximum_classified = -1
+best_iter_and_rate = {}
+for training_iterations in iterations_and_rate_with_accuracy:
+	for learning_rate in iterations_and_rate_with_accuracy[training_iterations]:
+		if iterations_and_rate_with_accuracy[training_iterations][learning_rate] > maximum_classified:
+			maximum_classified = iterations_and_rate_with_accuracy[training_iterations][learning_rate]
+			best_iter_and_rate['iter'] = training_iterations
+			best_iter_and_rate['rate'] = learning_rate
+print(best_iter_and_rate)
 
-best_iter, best_rate = max((x, max(y, key=y.get)) for x, y in iterations_and_rate_with_accuracy.items())
-print("After testing on the validation set, the best choice of training_iterations is {} and learning_rate is {}.".format(best_iter, best_rate))
+print("After testing on the validation set, the best choice of training_iterations is {} and learning_rate is {}.".format(best_iter_and_rate['iter'], best_iter_and_rate['rate']))
 print("Learning the params on the whole training set using this pair of hyperparams...")
-perceptron_weight_vector = train_perceptron(learning_rate=best_rate, training_iterations=best_iter, training_data_set=whole_training_set_doc_by_doc)
+perceptron_weight_vector = train_perceptron(learning_rate=best_iter_and_rate['rate'], training_iterations=best_iter_and_rate['iter'], training_data_set=whole_training_set_doc_by_doc)
 print("Testing on the whole test set using this pair of hyperparams...")
 classify_and_test_for_accuracy(classifier="Perceptron", perceptron_weight_vector=perceptron_weight_vector)
-
-
-
-
-
-
-
-
