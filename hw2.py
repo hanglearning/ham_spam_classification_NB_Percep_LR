@@ -249,7 +249,7 @@ def classify_and_test_for_accuracy(classifier, test_on_validation=None, perceptr
 # Choosing the best lambda for logistic regression
 print("\nChoosing the best regularization constant lambda for Logistic Regression...")
 learning_rate = 0.1
-training_iterations = 5
+training_iterations = 4
 print("We will use {} training iterations and the learning rate {}, and test for lambda in [0, 10]".format(training_iterations, learning_rate))
 regularization_lambda_with_accuracy = {}
 for regularization_lambda in range(11):
