@@ -16,13 +16,13 @@ import operator
 
 # trainig_set_dir = sys.argv[1]
 # test_set_dir = sys.argv[2]
-# stop_word_dir = sys.argv[3]
+# stop_word_path = sys.argv[3]
 
 trainig_set_dir = '/Users/chenhang91/TEMP/684group2/hw 2 datasets/dataset 1/train/'
 test_set_dir = '/Users/chenhang91/TEMP/684group2/hw 2 datasets/dataset 1/test/'
 stop_word_path = '/Users/chenhang91/TEMP/684group2/hw 2 datasets/stop_words.txt' # found from some github that contains common stop words to skip
-learning_rate = 0.1 # Andrew Ng 0.001 * 3 till 1
-regularization_lambda = 1
+learning_rate = 0.001 # Andrew Ng 0.001 * 3 till 1
+regularization_lambda = 10
 training_iterations = 100
 
 def process_documents_and_extract_words(data_set_dir):
@@ -40,7 +40,7 @@ def process_documents_and_extract_words(data_set_dir):
     # read in stop_words first
     if os.path.isfile(stop_word_path):
         with open(stop_word_path, 'r', encoding='utf-8', errors='ignore') as txt_file:
-            stop_words = set(re.findall(r'\w+', txt_file)) # https://www.guru99.com/python-regular-expressions-complete-tutorial.html#2
+            stop_words = set(re.findall(r'\w+', txt_file.lower())) # https://www.guru99.com/python-regular-expressions-complete-tutorial.html#2
 
     for class_entry in os.listdir(data_set_dir):
         if not class_entry.startswith('.') and os.path.isdir(os.path.join(data_set_dir, class_entry)): #https://stackoverflow.com/questions/3761473/python-not-recognising-directories-os-path-isdir #https://stackoverflow.com/questions/15235823/how-to-ignore-hidden-files-in-python-functions
@@ -57,7 +57,7 @@ def process_documents_and_extract_words(data_set_dir):
                     with open(os.path.join(data_set_dir, class_entry, doc_entry), 'r', encoding='utf-8', errors='ignore') as doc_file:
                         doc_content = doc_file.read()
                         training_set_index_iter += 1
-                        words_count_for_this_doc = collections.Counter(re.findall(r'\w+', doc_content)) # a (Counter) dictionary that counts the words # https://stackoverflow.com/questions/11011756/is-there-any-pythonic-way-to-combine-two-dicts-adding-values-for-keys-that-appe
+                        words_count_for_this_doc = collections.Counter(re.findall(r'\w+', doc_content.lower())) # a (Counter) dictionary that counts the words # https://stackoverflow.com/questions/11011756/is-there-any-pythonic-way-to-combine-two-dicts-adding-values-for-keys-that-appe
                         for key in words_count_for_this_doc: # remove stop words
                             if key in stop_words:
                                 del words_count_for_this_doc[key]
@@ -95,6 +95,7 @@ def train_navie_bayes():
     num_of_words_occurances = {}
     num_of_words_occurances['num_of_unique_words_in_all_document_space'] = len(vocabulary_set)
     # calculate naive_bayes_class_prior
+    entire_docs_count = 0
     for class_label in whole_data_set_doc_by_doc:
         naive_bayes_class_prior[class_label] = len(whole_data_set_doc_by_doc[class_label])
         entire_docs_count += naive_bayes_class_prior[class_label]
@@ -118,13 +119,13 @@ def train_perceptron(learning_rate, training_iterations, training_data_set):
         for class_label in training_data_set:
             for document in training_data_set[class_label]:
                 prediction = ""
-                perceptron_weighted_sum_of_this_doc = weight_vector['bias_term'] * 1
+                weighted_sum_of_this_doc = weight_vector['bias_term'] * 1
                 for word in training_data_set[class_label][document]:
                     if word not in weight_vector:
-                        weight_vector[word] = random.uniform(0.01, 0.1) # initialize weights as some small values # https://stackoverflow.com/questions/6088077/how-to-get-a-random-number-between-a-float-range
-                    perceptron_weighted_sum_of_this_doc += weight_vector[word] * training_data_set[class_label][document][word]
+                        weight_vector[word] = random.uniform(0.001, 0.01) # initialize weights as some small values # https://stackoverflow.com/questions/6088077/how-to-get-a-random-number-between-a-float-range
+                    weighted_sum_of_this_doc += weight_vector[word] * training_data_set[class_label][document][word]
                 # sign function
-                prediction = class_labels[0] if perceptron_weighted_sum_of_this_doc > 0 else class_labels[1] # https://stackoverflow.com/questions/394809/does-python-have-a-ternary-conditional-operator conditional operator in python
+                prediction = class_labels[0] if weighted_sum_of_this_doc > 0 else class_labels[1] # https://stackoverflow.com/questions/394809/does-python-have-a-ternary-conditional-operator conditional operator in python
                 if prediction != class_label:
                     # update weight, we treat class_labels[0] as 1 and class_labels[1] as -1
                     target_val_minus_prediction = (1 - (-1)) if class_label == class_labels[0] else (-1 - 1)
@@ -137,97 +138,129 @@ def train_perceptron(learning_rate, training_iterations, training_data_set):
     print("Learning by Perceptron Rule accomplished!\n")
     return weight_vector
 
-perceptron_weight_vector = train_perceptron(learning_rate, training_iterations, divided_training_set)
+perceptron_weight_vector = train_perceptron(learning_rate, training_iterations, whole_data_set_doc_by_doc)
 
 '''used algorithm in Lec6 page26 and page30'''
-def train_logistic_regression(learning_rate, regularization_lambda, training_iterations):
+def train_logistic_regression(learning_rate, regularization_lambda, training_iterations, training_data_set):
     print("Learning by Logistic Regression...")
     weight_vector = {'bias_term': 0.1}
     # initialize weights for all words
     for word in vocabulary_set:
-        weight_vector[word] = random.uniform(0.01, 0.1)
+        weight_vector[word] = random.uniform(0.001, 0.01)
     weight_vector_to_update = deepcopy(weight_vector) # because of the batch algorithm
     for i in range(training_iterations):
-        # calculate the weighted sum
-        weighted_sum_of_this_doc = weight_vector['bias_term'] * 1
         for word in vocabulary_set:
-            for class_label in whole_data_set_doc_by_doc:
-                for document in whole_data_set_doc_by_doc[class_label]:
-                    if word in whole_data_set_doc_by_doc[class_label][document]:
-                        for word_in_this_doc in whole_data_set_doc_by_doc[class_label][document]:
-                            weighted_sum_of_this_doc += weight_vector[word_in_this_doc] * whole_data_set_doc_by_doc[class_label][document][word_in_this_doc]
+            for class_label in training_data_set:
+                for document in training_data_set[class_label]:
+                    if word in training_data_set[class_label][document]:
+                        weighted_sum_of_this_doc = weight_vector['bias_term'] * 1
+                        for word_in_this_doc in training_data_set[class_label][document]:
+                            # calculate the weighted sum
+                            weighted_sum_of_this_doc += weight_vector[word_in_this_doc] * training_data_set[class_label][document][word_in_this_doc]
                         # prepare the vars tp update the weight
                         yi = 1 if class_label == class_labels[0] else 0
                         exp_weighted_sum_of_this_doc = math.exp(weighted_sum_of_this_doc)
                         # update the weights for all the features
-                        weight_vector_to_update[word] += learning_rate * whole_data_set_doc_by_doc[class_label][document][word] * (yi - exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc)) - learning_rate * regularization_lambda * weight_vector[word]
+                        weight_vector_to_update[word] += learning_rate * training_data_set[class_label][document][word] * (yi - exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc)) - learning_rate * regularization_lambda * weight_vector[word]
                     else:
                         continue
         # update the weight for the bias term
-        for class_label in whole_data_set_doc_by_doc:
-            for document in whole_data_set_doc_by_doc[class_label]:
-                for word_in_this_doc in whole_data_set_doc_by_doc[class_label][document]:
-                        weighted_sum_of_this_doc += weight_vector[word_in_this_doc] * whole_data_set_doc_by_doc[class_label][document][word_in_this_doc]
+        for class_label in training_data_set:
+            for document in training_data_set[class_label]:
+                for word_in_this_doc in training_data_set[class_label][document]:
+                        weighted_sum_of_this_doc += weight_vector[word_in_this_doc] * training_data_set[class_label][document][word_in_this_doc]
                 yi = 1 if class_label == class_labels[0] else 0
                 exp_weighted_sum_of_this_doc = math.exp(weighted_sum_of_this_doc)
                 weight_vector_to_update['bias_term'] += learning_rate * (yi - exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc)) #no regularization for the bias term
         weight_vector = deepcopy(weight_vector_to_update)
+        for word in weight_vector:
+            weight_vector[word] /= 10000
     return weight_vector
 
-logistic_regression_weight_vector = train_perceptron(learning_rate, regularization_lambda, training_iterations)
+logistic_regression_weight_vector = train_logistic_regression(learning_rate, regularization_lambda, training_iterations, whole_data_set_doc_by_doc)
 
-def classify_and_test_for_accuracy(classifier):
+def classify_and_test_for_accuracy(classifier, test_on_validation=None, divided_validation_set=None, perceptron_weight_vector=None, logistic_regression_weight_vector=None):
+    print("Testing by {}...".format(classifier))
     correctly_cassified = 0
     documents_count = 0
-    for class_entry in os.listdir(test_set_dir):
-        if not class_entry.startswith('.') and os.path.isdir(os.path.join(test_set_dir, class_entry)):
-            for doc_entry in os.listdir(test_set_dir + class_entry):
-                if not doc_entry.startswith('.') and os.path.isfile(os.path.join(test_set_dir, class_entry, doc_entry)):
-                    with open(os.path.join(test_set_dir, class_entry, doc_entry), 'r', encoding='utf-8', errors='ignore') as doc_file:
-                        prediction = ""
-                        documents_count += 1
-                        doc_content = doc_file.read()
-                        words_count_for_this_doc = collections.Counter(re.findall(r'\w+', doc_content))
-                        print("Testing by {}...".format(classifier))
-                        if classifier == "Naive Bayes":
-                            class_score_for_this_doc = {}
-                            for class_label in class_labels:
-                                class_score_for_this_doc[class_label] = math.log(naive_bayes_class_prior[class_label])
-                                for word in words_count_for_this_doc:
-                                    if word not in stop_words:
-                                        if word not in data_set_by_class_label[class_label]:
-                                            data_set_by_class_label[class_label][word] = 0
-                                        # apply smoothing
-                                        class_score_for_this_doc[class_label] += words_count_for_this_doc[word] * math.log((data_set_by_class_label[class_label][word] + 1)/ num_of_words_occurances[class_label] + num_of_words_occurances['num_of_unique_words_in_all_document_space'])
-                                prediction = max(class_score_for_this_doc.items(), key=operator.itemgetter(1))[0] # https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
-                        elif classifier == "Perceptron":
-                            perceptron_weighted_sum_of_this_doc = perceptron_weight_vector['bias_term'] * 1
-                            for word in words_count_for_this_doc:
-                                if word in vocabulary_set:
-                                    perceptron_weighted_sum_of_this_doc += perceptron_weight_vector[word] * words_count_for_this_doc[word]
-                                else:
-                                    # we ignore the unseen words from the training sets
-                                    continue
-                            # sign function
-                            prediction = class_labels[0] if perceptron_weighted_sum_of_this_doc > 0 else class_labels[1]
-                        elif classifier == "Logistic Regression":
-                            logistic_regression_weighted_sum_of_this_doc = logistic_regression_weight_vector['bias_term'] * 1
-                            for word in words_count_for_this_doc:
-                                if word in vocabulary_set:
-                                    logistic_regression_weighted_sum_of_this_doc += logistic_regression_weight_vector[word] * words_count_for_this_doc[word]
-                                    exp_weighted_sum_of_this_doc = math.exp(logistic_regression_weighted_sum_of_this_doc)
-                                    # sigmoid function
-                                    prediction = class_labels[1] if 1/(1 + exp_weighted_sum_of_this_doc) > exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc) else class_labels[0] # corresponding to yi = 1 if class_label == class_labels[0] else 0 in train_logistic_regression
-                                else:
-                                    continue
+    if test_on_validation == True:
+        for class_entry in divided_validation_set:
+            for doc_entry in divided_validation_set[class_entry]:
+                prediction = ""
+                documents_count += 1
+                if classifier == "Perceptron":
+                    perceptron_weighted_sum_of_this_doc = perceptron_weight_vector['bias_term'] * 1
+                    for word in divided_validation_set:
+                        if word in vocabulary_set:
+                            perceptron_weighted_sum_of_this_doc += perceptron_weight_vector[word] * divided_validation_set[word]
                         else:
-                            sys.exit("Please input a valid classifier to test the accuracy. Program aborts.")
-                        correctly_cassified += 1 if prediction == class_entry else 0
+                            # we ignore the unseen words from the training sets
+                            continue
+                    # sign function
+                    prediction = class_labels[0] if perceptron_weighted_sum_of_this_doc > 0 else class_labels[1]
+                elif classifier == "Logistic Regression":
+                    logistic_regression_weighted_sum_of_this_doc = logistic_regression_weight_vector['bias_term'] * 1
+                    for word in divided_validation_set:
+                        if word in vocabulary_set:
+                            logistic_regression_weighted_sum_of_this_doc += logistic_regression_weight_vector[word] * divided_validation_set[word]
+                            exp_weighted_sum_of_this_doc = math.exp(logistic_regression_weighted_sum_of_this_doc)
+                            # sigmoid function
+                            prediction = class_labels[1] if 1/(1 + exp_weighted_sum_of_this_doc) > exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc) else class_labels[0] # corresponding to yi = 1 if class_label == class_labels[0] else 0 in train_logistic_regression
+                        else:
+                            continue
+                correctly_cassified += 1 if prediction == class_entry else 0
+    else:
+        for class_entry in os.listdir(test_set_dir):
+            if not class_entry.startswith('.') and os.path.isdir(os.path.join(test_set_dir, class_entry)):
+                for doc_entry in os.listdir(test_set_dir + class_entry):
+                    if not doc_entry.startswith('.') and os.path.isfile(os.path.join(test_set_dir, class_entry, doc_entry)):
+                        with open(os.path.join(test_set_dir, class_entry, doc_entry), 'r', encoding='utf-8', errors='ignore') as doc_file:
+                            prediction = ""
+                            documents_count += 1
+                            doc_content = doc_file.read()
+                            divided_validation_set = collections.Counter(re.findall(r'\w+', doc_content.lower()))
+                            if classifier == "Naive Bayes":
+                                class_score_for_this_doc = {}
+                                for class_label in class_labels:
+                                    class_score_for_this_doc[class_label] = math.log(naive_bayes_class_prior[class_label])
+                                    for word in divided_validation_set:
+                                        if word not in stop_words:
+                                            if word not in data_set_by_class_label[class_label]:
+                                                data_set_by_class_label[class_label][word] = 0
+                                            # apply smoothing
+                                            class_score_for_this_doc[class_label] += divided_validation_set[word] * math.log((data_set_by_class_label[class_label][word] + 1)/ num_of_words_occurances[class_label] + num_of_words_occurances['num_of_unique_words_in_all_document_space'])
+                                    prediction = max(class_score_for_this_doc.items(), key=operator.itemgetter(1))[0] # https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
+                            elif classifier == "Perceptron":
+                                perceptron_weighted_sum_of_this_doc = perceptron_weight_vector['bias_term'] * 1
+                                for word in divided_validation_set:
+                                    if word in vocabulary_set:
+                                        perceptron_weighted_sum_of_this_doc += perceptron_weight_vector[word] * divided_validation_set[word]
+                                    else:
+                                        # we ignore the unseen words from the training sets
+                                        continue
+                                # sign function
+                                prediction = class_labels[0] if perceptron_weighted_sum_of_this_doc > 0 else class_labels[1]
+                            elif classifier == "Logistic Regression":
+                                logistic_regression_weighted_sum_of_this_doc = logistic_regression_weight_vector['bias_term'] * 1
+                                for word in divided_validation_set:
+                                    if word in vocabulary_set:
+                                        logistic_regression_weighted_sum_of_this_doc += logistic_regression_weight_vector[word] * divided_validation_set[word]
+                                        exp_weighted_sum_of_this_doc = math.exp(logistic_regression_weighted_sum_of_this_doc)
+                                        # sigmoid function
+                                        prediction = class_labels[1] if 1/(1 + exp_weighted_sum_of_this_doc) > exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc) else class_labels[0] # corresponding to yi = 1 if class_label == class_labels[0] else 0 in train_logistic_regression
+                                    else:
+                                        continue
+                            else:
+                                sys.exit("Please input a valid classifier to test the accuracy. Program aborts.")
+                            correctly_cassified += 1 if prediction == class_entry else 0
 
-                else:
-                    continue
-        else:
-            continue
-    print("Accuracy on the training set by {} is {}/{} ({})".format(classifier, correctly_cassified, documents_count, correctly_cassified/documents_count)) #https://stackoverflow.com/questions/55486728/in-python-how-can-we-combine-the-formatting-mechanism-for-both-strings-and-a-per
+                    else:
+                        continue
+            else:
+                continue
+    print("Accuracy on the test set by {} is {}/{} ({})".format(classifier, correctly_cassified, documents_count, correctly_cassified/documents_count)) #https://stackoverflow.com/questions/55486728/in-python-how-can-we-combine-the-formatting-mechanism-for-both-strings-and-a-per
+    return correctly_cassified
 
-
+classify_and_test_for_accuracy("Naive Bayes")
+classify_and_test_for_accuracy("Perceptron")
+classify_and_test_for_accuracy("Logistic Regression")
