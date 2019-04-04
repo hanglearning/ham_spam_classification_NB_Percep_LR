@@ -213,7 +213,7 @@ def classify_and_test_for_accuracy(classifier, test_on_validation=None, perceptr
                             whole_training_set_word_count_by_class_label[class_label][word] = 0
                         # apply smoothing
                         class_score_for_this_doc[class_label] += test_set_used[class_entry][doc_entry][word] * math.log((whole_training_set_word_count_by_class_label[class_label][word] + 1)/ num_of_words_occurances[class_label] + num_of_words_occurances['num_of_unique_words_in_all_document_space'])
-                prediction = max(class_score_for_this_doc.items(), key=operator.itemgetter(1))[0] # https://stackoverflow.com/questions/268272/getting-key-with-maximum-value-in-dictionary
+                prediction = max(class_score_for_this_doc.items(), key=operator.itemgetter(1))[0]
             elif classifier == "Perceptron":
                 perceptron_weighted_sum_of_this_doc = perceptron_weight_vector['bias_term'] * 1
                 for word in test_set_used[class_entry][doc_entry]:
@@ -252,7 +252,7 @@ training_iterations = 4
 learning_rate = 0.1
 weight_weaken_scaler = 100
 regularization_lambda_values = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-print("We will use {} training iterations, the learning rate {}, the weight_weaken_scaler {}, and test for lambda in {}".format(training_iterations, learning_rate, weight_weaken_scaler, regularization_lambda_values))
+print("We will use {} training iterations, the learning rate {}, the weight_weaken_scaler {}, and test for lambda in {}\n".format(training_iterations, learning_rate, weight_weaken_scaler, regularization_lambda_values))
 regularization_lambda_with_accuracy = {}
 for regularization_lambda in regularization_lambda_values:
     print("Using lambda {} on the 70% training set...".format(regularization_lambda))
@@ -271,7 +271,7 @@ classify_and_test_for_accuracy(classifier="Logistic Regression", logistic_regres
 print("\nChoosing the best learning_rate and training_iterations for perceptron...")
 training_iterations_values = (10, 20, 50)
 learning_rate_values = (0.003, 0.01, 0.03)
-print("We will use training iterations in {} and the learning rate {}, and use the pair of params associated to the highest accuracy to test on the test data")
+print("We will use training iterations in {} and the learning rate {}, and use the pair of params associated to the highest accuracy to test on the test data.\n")
 iterations_and_rate_with_accuracy = {}
 for training_iterations in training_iterations_values:
     iterations_and_rate_with_accuracy[training_iterations] = {}
@@ -281,6 +281,11 @@ for training_iterations in training_iterations_values:
         print("Using training iterations {} and learning_rate {} on the 30% validation set...".format(training_iterations, learning_rate))
         iterations_and_rate_with_accuracy[training_iterations][learning_rate] = classify_and_test_for_accuracy(classifier="Perceptron", test_on_validation=True, perceptron_weight_vector=perceptron_weight_vector)
         print()
+
+for key1 in iterations_and_rate_with_accuracy:
+    for key2 in iterations_and_rate_with_accuracy[key1]:
+        print(key1, key2, iterations_and_rate_with_accuracy[key1][key2])
+
 best_iter, best_rate = max((x, max(y, key=y.get)) for x, y in iterations_and_rate_with_accuracy.items())
 print("After testing on the validation set, the best choice of training_iterations is {} and learning_rate is {}.".format(best_iter, best_rate))
 print("Learning the params on the whole training set using this pair of hyperparams...")
