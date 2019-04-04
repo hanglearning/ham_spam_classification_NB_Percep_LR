@@ -243,27 +243,27 @@ def classify_and_test_for_accuracy(classifier, test_on_validation=None, perceptr
     return correctly_cassified
 
 # Test Naive Bayes
-naive_bayes_class_prior, num_of_words_occurances = train_navie_bayes()
-classify_and_test_for_accuracy("Naive Bayes")
+# naive_bayes_class_prior, num_of_words_occurances = train_navie_bayes()
+# classify_and_test_for_accuracy("Naive Bayes")
 
-# # Choosing the best lambda for logistic regression
-# print("\nChoosing the best regularization constant lambda for Logistic Regression...")
-# print("We will use 20 training iterations and the learning rate 0.003, and test for lambda in (0, 1, 2, 3, 5, 10)")
-# learning_rate = 0.003
-# training_iterations = 20
-# regularization_lambda_with_accuracy = {}
-# for regularization_lambda in (0, 1, 2, 3, 5, 10):
-#     print("Using lambda {} on the 70% training set...".format(regularization_lambda))
-#     logistic_regression_weight_vector = train_logistic_regression(learning_rate, regularization_lambda, training_iterations, divided_training_set)
-#     print("Testing lambda {} on the 30% validation set...".format(regularization_lambda))
-#     regularization_lambda_with_accuracy[regularization_lambda] = classify_and_test_for_accuracy("Logistic Regression", test_on_validation=True, divided_validation_set=divided_validation_set, logistic_regression_weight_vector=logistic_regression_weight_vector)
-#     print()
-# best_lambda = max(regularization_lambda_with_accuracy.items(), key=operator.itemgetter(1))[0]
-# print("After testing on the validation set, the best to choose is {}".format(best_lambda))
-# print("Using lambda {} to train on the training set".format(best_lambda))
-# logistic_regression_weight_vector = train_logistic_regression(learning_rate, best_lambda, training_iterations, whole_training_set_doc_by_doc)
-# print("Using lambda {} to test on the test set".format(best_lambda))
-# classify_and_test_for_accuracy("Logistic Regression", logistic_regression_weight_vector=logistic_regression_weight_vector)
+# Choosing the best lambda for logistic regression
+print("\nChoosing the best regularization constant lambda for Logistic Regression...")
+print("We will use 100 training iterations and the learning rate 0.003, and test for lambda in [0, 10]")
+learning_rate = 0.003
+training_iterations = 100
+regularization_lambda_with_accuracy = {}
+for regularization_lambda in range(11):
+    print("Using lambda {} on the 70% training set...".format(regularization_lambda))
+    logistic_regression_weight_vector = train_logistic_regression(learning_rate, regularization_lambda, training_iterations, divided_training_set, True)
+    print("Testing lambda {} on the 30% validation set...".format(regularization_lambda))
+    regularization_lambda_with_accuracy[regularization_lambda] = classify_and_test_for_accuracy(classifier="Logistic Regression", test_on_validation=True, logistic_regression_weight_vector=logistic_regression_weight_vector)
+    print()
+best_lambda = max(regularization_lambda_with_accuracy.items(), key=operator.itemgetter(1))[0]
+print("After testing on the validation set, the best to choose is {}".format(best_lambda))
+print("Using lambda {} to train on the training set with the same iterations and learning rate.".format(best_lambda))
+logistic_regression_weight_vector = train_logistic_regression(learning_rate, best_lambda, training_iterations, whole_training_set_doc_by_doc)
+print("Using lambda {} to test on the test set".format(best_lambda))
+classify_and_test_for_accuracy(classifier="Logistic Regression", logistic_regression_weight_vector=logistic_regression_weight_vector)
 
 # # Choosing the best hyperparameter learning_rate and training_iterations for perceptron
 # print("\nChoosing the best learning_rate and training_iterations for perceptron...")
