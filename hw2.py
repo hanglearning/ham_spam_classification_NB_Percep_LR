@@ -243,8 +243,8 @@ def classify_and_test_for_accuracy(classifier, test_on_validation=None, perceptr
     return correctly_cassified
 
 # Test Naive Bayes
-# naive_bayes_class_prior, num_of_words_occurances = train_navie_bayes()
-# classify_and_test_for_accuracy("Naive Bayes")
+naive_bayes_class_prior, num_of_words_occurances = train_navie_bayes()
+classify_and_test_for_accuracy("Naive Bayes")
 
 # Choosing the best lambda for logistic regression
 print("\nChoosing the best regularization constant lambda for Logistic Regression...")
@@ -267,21 +267,26 @@ logistic_regression_weight_vector = train_logistic_regression(learning_rate, bes
 print("Using lambda {} to test on the test set".format(best_lambda))
 classify_and_test_for_accuracy(classifier="Logistic Regression", logistic_regression_weight_vector=logistic_regression_weight_vector)
 
-# # Choosing the best hyperparameter learning_rate and training_iterations for perceptron
-# print("\nChoosing the best learning_rate and training_iterations for perceptron...")
-# print("We will use training iterations in (10, 20, 50) and the learning rate (0.003, 0.01, 0.03), report the accuracy, and use the best params to test on the test data")
-# iterations_and_rate_with_accuracy = {}
-# for training_iterations in (10, 20, 50):
-#     for learning_rate in (0.003, 0.01, 0.03):
-#         print("Using training iterations {} and learning_rate {} on the 70% training set...".format(training_iterations, learning_rate))
-#         perceptron_weight_vector = train_perceptron(learning_rate, training_iterations, divided_validation_set)
-#         print("Using training iterations {} and learning_rate {} on the 30% validation set...".format(training_iterations, learning_rate))
-#         iterations_and_rate_with_accuracy[training_iterations] = {}
-#         iterations_and_rate_with_accuracy[training_iterations][learning_rate] = classify_and_test_for_accuracy("Perceptron", test_on_validation=True, divided_validation_set=divided_validation_set, perceptron_weight_vector=perceptron_weight_vector)
-#         print()
-# print("After testing on the validation set, the best to choose is any. So we will choose training_iterations 50 and learning_rate 0.003 to test on the whole test set.")
-# perceptron_weight_vector = train_perceptron(learning_rate=0.003, training_iterations=50, training_data_set=whole_training_set_doc_by_doc)
-# classify_and_test_for_accuracy(classifier="Perceptron", perceptron_weight_vector=perceptron_weight_vector)
+# Choosing the best hyperparameter learning_rate and training_iterations for perceptron
+print("\nChoosing the best learning_rate and training_iterations for perceptron...")
+training_iterations_values = (10, 20, 50)
+learning_rate_values = (0.003, 0.01, 0.03)
+print("We will use training iterations in {} and the learning rate {}, and use the pair of params associated to the highest accuracy to test on the test data")
+iterations_and_rate_with_accuracy = {}
+for training_iterations in training_iterations_values:
+    iterations_and_rate_with_accuracy[training_iterations] = {}
+    for learning_rate in learning_rate_values:
+        print("Using training iterations {} and learning_rate {} on the 70% training set...".format(training_iterations, learning_rate))
+        perceptron_weight_vector = train_perceptron(learning_rate, training_iterations, divided_validation_set)
+        print("Using training iterations {} and learning_rate {} on the 30% validation set...".format(training_iterations, learning_rate))
+        iterations_and_rate_with_accuracy[training_iterations][learning_rate] = classify_and_test_for_accuracy(classifier="Perceptron", test_on_validation=True, perceptron_weight_vector=perceptron_weight_vector)
+        print()
+best_iter, best_rate = max((x, max(y, key=y.get)) for x, y in iterations_and_rate_with_accuracy.items())
+print("After testing on the validation set, the best choice of training_iterations is {} and learning_rate is {}.".format(best_iter, best_rate))
+print("Learning the params on the whole training set using this pair of hyperparams...")
+perceptron_weight_vector = train_perceptron(learning_rate=best_rate, training_iterations=best_iter, training_data_set=whole_training_set_doc_by_doc)
+print("Testing on the whole test set using this pair of hyperparams...")
+classify_and_test_for_accuracy(classifier="Perceptron", perceptron_weight_vector=perceptron_weight_vector)
 
 
 
