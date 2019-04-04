@@ -191,7 +191,7 @@ def train_logistic_regression(learning_rate, regularization_lambda, training_ite
                 weight_vector_to_update['bias_term'] += learning_rate * (yi - exp_weighted_sum_of_this_doc/(1 + exp_weighted_sum_of_this_doc)) #no regularization for the bias term
         weight_vector = deepcopy(weight_vector_to_update)
         for word in weight_vector:
-            weight_vector[word] /= 10000 # to avoid exp() explode
+            weight_vector[word] /= 1000 # to avoid exp() explode
     return weight_vector
 
 def classify_and_test_for_accuracy(classifier, test_on_validation=None, perceptron_weight_vector=None, logistic_regression_weight_vector=None):
