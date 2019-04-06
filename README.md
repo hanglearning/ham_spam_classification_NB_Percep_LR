@@ -4,15 +4,15 @@ We are also required to test the best hyperparameters possible by testing on the
 
 A detailed accuracy report is also included within this repo.
 
-How to run our code:
+### How to run our code:
 
 Please run from the command line -
 
-$ python hw2.py <training_set_path> <test_set_paht> <stop_words.txt_path>
+```$ python hw2.py <training_set_path> <test_set_paht> <stop_words.txt_path>```
 
 For example:
 
-$ python hw2.py hw\ 2\ datasets/dataset\ 1/train/ hw\ 2\ datasets/dataset\ 1/test/ stop_words.txt
+```$ python hw2.py hw\ 2\ datasets/dataset\ 1/train/ hw\ 2\ datasets/dataset\ 1/test/ stop_words.txt```
 
 The stop_words.txt was found from 
 https://github.com/henrydinh/Logistic-Regression-Text-Classification
